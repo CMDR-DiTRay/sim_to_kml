@@ -247,11 +247,14 @@ def to_kml(df, ctime, file_path=None):
         
         print(hgt)
 
+        ## Main loop
+        # End last track
         if not first and (prev_in_air != in_air or prev_stall != stall):
             print('Write track')
             ls = prepare_track(trk, prev_in_air, prev_stall)
             ls.coords = coords
-            
+        
+        # Start new track
         if first or prev_in_air != in_air or prev_stall != stall:
             print('New track')
             coords = []
@@ -263,6 +266,7 @@ def to_kml(df, ctime, file_path=None):
         prev_stall  = stall
         if first:
             first = False
+        ## End of main loop
     
     ls = prepare_track(trk, prev_in_air, prev_stall)
     ls.coords = coords
