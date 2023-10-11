@@ -161,57 +161,13 @@ def prepare_track(trk, in_air, stall):
         
     return ls
 
-def kml_debug(kml):
-    flt_name = name_from_time(df.time[0])
-    
-    no_trk_stl = norm_track_style()
-    st_trk_stl = stall_track_style()
-    da_stl_map = data_style_map()
-    sp_stl_map = special_style_map()
-    st_stl_map = stall_style_map()
-    
-    # File and structure
-    doc  = kml.document
-    flt  = doc.newfolder(name='Flight')
-    trk  = flt.newfolder(name=flt_name)
-    spec = doc.newfolder(name='Special placemarks')
-    dat  = doc.newfolder(name='Flight data')
-    
-    # Data elements
-    # LineStyle
-    ls = trk.newlinestring(name='In the air')
-    ls.tessellate = 0
-    ls.extrude = 1
-    ls.altitudemode = 'absolute'
-    ls.style = no_trk_stl
-    ls.coords = [
-        (48.229854523436, 54.2741259977851, 250),
-        (48.2276952650135, 54.2719542330365, 270)]
-    
-    ls = trk.newlinestring(name='In the air')
-    ls.tessellate = 0
-    ls.extrude = 1
-    ls.altitudemode = 'absolute'
-    ls.style = st_trk_stl
-    ls.coords = [
-        (48.2276952650135, 54.2719542330365, 270),
-        (48.2255303746956, 54.2699138552678, 240)]
-    
-    # Point
-    pnt = spec.newpoint(name='Start log')
-    pnt.stylemap = sp_stl_map
-    pnt.coords = [(48.229854523436, 54.2741259977851)]
-    
+def add_data_point(dat, 
+                   lon, lat, alt, hgt, 
+                   time, hdg,
+                   ias, gs, tas, vs):
+    desc = ''
     pnt = dat.newpoint()
-    pnt.altitudemode = 'absolute'
-    pnt.stylemap = da_stl_map
-    pnt.coords = [(48.2276952650135, 54.2719542330365, 270)]
-    pnt.description = 'By DiTRay'
     
-    pnt = spec.newpoint(name='Stall!!')
-    pnt.altitudemode = 'absolute'
-    pnt.stylemap = st_stl_map
-    pnt.coords = [(48.2255303746956, 54.2699138552678, 240)]
 
 def to_kml(df, ctime, file_path=None):
     # Generate document name by creation date/time
@@ -235,41 +191,55 @@ def to_kml(df, ctime, file_path=None):
     
     #kml = kml_debug(kml)
     
+    ## Main loop
     first = True
     for row_tuple in df.iterrows():
-        row = row_tuple[-1]
-        lon = row.lon
-        lat = row.lat
-        alt = row.alt
-        hgt = row.hgt
-        in_air = is_in_air(row.hgt)
-        stall  = is_stall(row.stl)
+        row     = row_tuple[-1]
+        lon     = row.lon
+        lat     = row.lat
+        alt     = row.alt
+        hgt     = row.hgt
+        hdg     = row.hdg
+        vs      = row.vs
+        hdg_thr = 10
+        vs_thr  = 50
+        in_air  = is_in_air(row.hgt)
+        stall   = is_stall(row.stl)
         
-        print(hgt)
+        if first:
+            prev_in_air = in_air
+            prev_stall  = stall
+            prev_hdg    = hdg
+            prev_vs     = vs
+            coords      = []
+            first       = False
+            continue
 
-        ## Main loop
-        # End last track
-        if not first and (prev_in_air != in_air or prev_stall != stall):
+        # End/Start track
+        if prev_in_air != in_air or prev_stall != stall:
             print('Write track')
             ls = prepare_track(trk, prev_in_air, prev_stall)
             ls.coords = coords
-        
-        # Start new track
-        if first or prev_in_air != in_air or prev_stall != stall:
-            print('New track')
             coords = []
             
-        coords += [format_coords(lon, lat, alt, hgt)]
+            
+        
+        # If direction deviation is more than threshold,
+        # than add coords
+        hdg_dev = abs(prev_hdg - hdg)
+        vs_dev  = abs(prev_vs - vs)
+        if hdg_dev > hdg_thr or vs_dev > vs_thr:
+            print('hdg: ' + str(hdg))
+            print('prev_hdg: ' + str(prev_hdg))
+            print('hdg_dev: ' + str(hdg_dev))
+            coords += [format_coords(lon, lat, alt, hgt)]
+            prev_hdg = hdg
+            prev_vs  = vs
             
         # Prepare for next iteration
         prev_in_air = in_air
         prev_stall  = stall
-        if first:
-            first = False
         ## End of main loop
-    
-    ls = prepare_track(trk, prev_in_air, prev_stall)
-    ls.coords = coords
     
     # Saving
     if file_path == None:
