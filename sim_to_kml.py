@@ -226,6 +226,9 @@ def to_kml(df, ctime, file_path=None):
         gs      = row.gs
         tas     = row.tas
         flaps   = row.flp
+        om      = (row.om > 0)
+        mm      = (row.mm > 0)
+        im      = (row.im > 0)
         hdg_thr = 10
         vs_thr  = 150
         in_air  = is_in_air(row.hgt)
@@ -244,6 +247,7 @@ def to_kml(df, ctime, file_path=None):
                                         no_trk_stl, st_trk_stl)
             coords      = [format_coords(lon, lat, alt, hgt)]
             flaps_move  = False
+            marker      = False
             first       = False
             
             name = 'Start log'
@@ -293,16 +297,8 @@ def to_kml(df, ctime, file_path=None):
                       time, hdg, ias, gs, tas, vs,
                       sp_stl_map, name=name, msg=msg)
             coords += [format_coords(lon, lat, alt, hgt)]
-            
             flaps_move = False
-            prev_in_air = in_air
-            prev_stall  = stall
-            prev_hdg    = hdg
-            prev_vs     = vs
-            prev_alt    = alt
-            prev_hgt    = hgt
-            continue
-            
+        
         prev_flaps = flaps
             
         # End/Start track
@@ -317,19 +313,50 @@ def to_kml(df, ctime, file_path=None):
                       time, hdg, ias, gs, tas, vs,
                       sp_stl_map, name=name, msg=msg,
                       force_ground=force_ground)
-            
-            prev_in_air = in_air
-            prev_stall  = stall
-            prev_hdg    = hdg
-            prev_vs     = vs
-            prev_alt    = alt
-            prev_hgt    = hgt
-            continue
+            prev_hdg = hdg
+            prev_vs  = vs
         
-        # Add information pin to the trajectory
-        # add_point(dat, lon, lat, alt, hgt,
-        #           time, hdg, ias, gs, tas, vs,
-        #           da_stl_map, fforce_ground)
+        name = None
+        msg  = None
+        
+        if om and not marker:
+            name = 'OM'
+            msg  = 'Passed outer marker'
+            coords += [format_coords(lon, lat, alt, hgt)]
+            add_point(dat, lon, lat, alt, hgt,
+                      time, hdg, ias, gs, tas, vs,
+                      sp_stl_map,
+                      name=name, msg=msg)
+            prev_hdg = hdg
+            prev_vs  = vs
+            marker = True
+            
+        if mm and not marker:
+            name = 'MM'
+            msg  = 'Passed middle marker'
+            coords += [format_coords(lon, lat, alt, hgt)]
+            add_point(dat, lon, lat, alt, hgt,
+                      time, hdg, ias, gs, tas, vs,
+                      sp_stl_map,
+                      name=name, msg=msg)
+            prev_hdg = hdg
+            prev_vs  = vs
+            marker = True
+        
+        if im and not marker:
+            name = 'IM'
+            msg  = 'Passed inner marker'
+            coords += [format_coords(lon, lat, alt, hgt)]
+            add_point(dat, lon, lat, alt, hgt,
+                      time, hdg, ias, gs, tas, vs,
+                      sp_stl_map,
+                      name=name, msg=msg)
+            prev_hdg = hdg
+            prev_vs  = vs
+            marker = True
+        
+        if not (im or mm or om) and marker:
+            marker = False
         
         # If direction deviation is more than threshold,
         # than add coords
@@ -338,14 +365,14 @@ def to_kml(df, ctime, file_path=None):
         if hdg_dev > hdg_thr or (in_air and vs_dev > vs_thr):
             coords += [format_coords(lon, lat, alt, hgt)]
             add_point(dat, lon, lat, alt, hgt,
-                           time, hdg, ias, gs, tas, vs,
-                           da_stl_map)
+                      time, hdg, ias, gs, tas, vs,
+                      da_stl_map,
+                      name=name, msg=msg)
             prev_hdg = hdg
             prev_vs  = vs
-            prev_alt = alt
-            prev_hgt = hgt
             
-        # Prepare for next iteration
+        prev_alt = alt
+        prev_hgt = hgt
         prev_in_air = in_air
         prev_stall  = stall
         ## End of main loop
