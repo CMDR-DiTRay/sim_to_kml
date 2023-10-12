@@ -189,29 +189,9 @@ def add_point(folder, lon, lat, alt, hgt,
     pnt.coords = [format_coords(lon, lat, alt, hgt)]
     pnt.description = desc
 
-def to_kml(df, ctime, file_path=None):
-    # Generate document name by creation date/time
-    kml_name = 'Flightlog' + string_from_time(ctime, delim='.')
-    # Generate flight folder name_from_time
-    flt_name = 'Flightlog' + string_from_time(df.time[0])
-    
-    no_trk_stl = norm_track_style()
-    st_trk_stl = stall_track_style()
-    da_stl_map = data_style_map()
-    sp_stl_map = special_style_map()
-    st_stl_map = stall_style_map()
-    
-    # File and structure
-    kml  = simplekml.Kml(name=kml_name)
-    doc  = kml.document
-    flt  = doc.newfolder(name='Flight')
-    trk  = flt.newfolder(name=flt_name)
-    spec = doc.newfolder(name='Special placemarks')
-    dat  = doc.newfolder(name='Flight data')
-    
-    #kml = kml_debug(kml)
-    
-    ## Main loop
+def process_data(flt, trk, spec, dat,
+                 no_trk_stl, st_trk_stl,
+                 da_stl_map, sp_stl_map, st_stl_map):
     first = True
     for row_tuple in df.iterrows():
         row     = row_tuple[-1]
@@ -385,6 +365,30 @@ def to_kml(df, ctime, file_path=None):
     add_point(spec, lon, lat, alt, hgt,
               time, hdg, ias, gs, tas, vs,
               sp_stl_map, name=name, msg=msg)
+
+def to_kml(df, ctime, file_path=None):
+    # Generate document name by creation date/time
+    kml_name = 'Flightlog' + string_from_time(ctime, delim='.')
+    # Generate flight folder name_from_time
+    flt_name = 'Flightlog' + string_from_time(df.time[0])
+    
+    no_trk_stl = norm_track_style()
+    st_trk_stl = stall_track_style()
+    da_stl_map = data_style_map()
+    sp_stl_map = special_style_map()
+    st_stl_map = stall_style_map()
+    
+    # File and structure
+    kml  = simplekml.Kml(name=kml_name)
+    doc  = kml.document
+    flt  = doc.newfolder(name='Flight')
+    trk  = flt.newfolder(name=flt_name)
+    spec = doc.newfolder(name='Special placemarks')
+    dat  = doc.newfolder(name='Flight data')
+    
+    process_data(flt, trk, spec, dat,
+                 no_trk_stl, st_trk_stl,
+                 da_stl_map, sp_stl_map, st_stl_map)
     
     # Saving
     if file_path == None:
