@@ -1,5 +1,8 @@
 #!/bin/python
 
+## sim_to_kml converts flight sim data to KML
+## Copyright (C) 2023  DiTRay
+
 import pandas as pd
 import yaml
 import simplekml
