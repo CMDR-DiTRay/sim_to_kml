@@ -25,16 +25,8 @@ def get_xp(csv_path, config, ctime):
         
     return df
 
-def set_stylemaps(kml):
-    return []
-
-def add_style_points(kml_buf):
-    
-    
-    return kml_buf
-
 def string_from_time(time, delim=':', second=False):
-    dt = datetime.fromtimestamp(time)
+    dt = datetime.utcfromtimestamp(time)
     name  = '{:02d}'.format(dt.day) + '-' + \
             '{:02d}'.format(dt.month) + '-' + \
             str(dt.year) + ' ' + \
@@ -57,7 +49,7 @@ def norm_track_style():
 def stall_track_style():
     track_style = simplekml.Style()
     track_style.linestyle.color = 'ff0000ff'
-    track_style.linestyle.width = 2
+    track_style.linestyle.width = 2.5
     track_style.polystyle.outline = 1
     track_style.polystyle.color = '7f0000ff'
     return track_style
@@ -163,16 +155,16 @@ def prepare_track(trk, in_air, stall,
         
     return ls
 
-def add_data_point(dat, 
-                   lon, lat, alt, hgt, 
-                   time, hdg,
-                   ias, gs, tas, vs,
-                   data_style_map, force_ground=False):
-    dtime    = datetime.fromtimestamp(time)
+def add_point(folder, lon, lat, alt, hgt, 
+              time, hdg,
+              ias, gs, tas, vs,
+              data_style_map,
+              name=None, msg=None,
+              force_ground=False):
     time_str = string_from_time(time, delim=':', second=True)
-    
-    desc =  '<![CDATA[' + \
-            'Time/Date: '   + time_str + '<br>' + \
+    desc = '<![CDATA['
+    if msg != None: desc += 'Event: ' + msg + '<br><br>'
+    desc += 'Time/Date: '   + time_str + '<br>' + \
             'Hdg: '         + str(round(hdg)) + '<br>' + \
             'IAS: '         + str(round(ias)) + '<br>' + \
             'GS: '          + str(round(gs))  + '<br>' + \
@@ -186,13 +178,16 @@ def add_data_point(dat,
             '<br>License: GNU GPLv3' + \
             ']]>'
     
-    pnt = dat.newpoint()
+    if name != None:
+        pnt = folder.newpoint(name=name)
+    else:
+        pnt = folder.newpoint()
+    
     if is_in_air(hgt) and not force_ground:
         pnt.altitudemode = 'absolute'
     pnt.stylemap = data_style_map
     pnt.coords = [format_coords(lon, lat, alt, hgt)]
     pnt.description = desc
-    pnt.snippet.maxlines = 3
 
 def to_kml(df, ctime, file_path=None):
     # Generate document name by creation date/time
@@ -230,6 +225,7 @@ def to_kml(df, ctime, file_path=None):
         ias     = row.ias
         gs      = row.gs
         tas     = row.tas
+        flaps   = row.flp
         hdg_thr = 10
         vs_thr  = 150
         in_air  = is_in_air(row.hgt)
@@ -243,11 +239,18 @@ def to_kml(df, ctime, file_path=None):
             prev_vs     = vs
             prev_alt    = alt
             prev_hgt    = hgt
+            prev_flaps  = flaps
             ls          = prepare_track(trk, in_air, stall, 
                                         no_trk_stl, st_trk_stl)
             coords      = [format_coords(lon, lat, alt, hgt)]
-            skip_land   = True
+            flaps_move  = False
             first       = False
+            
+            name = 'Start log'
+            msg  = 'Started logging'
+            add_point(spec, lon, lat, alt, hgt,
+                      time, hdg, ias, gs, tas, vs,
+                      sp_stl_map, name=name, msg=msg)
             continue
             
         # A walkaround to connect trajectories after landing
@@ -259,29 +262,74 @@ def to_kml(df, ctime, file_path=None):
             hgt_fix = hdg
             
         # If takeoff/landing place point on the ground
-        if not stall:
+        if not stall and not prev_stall:
             force_ground = True
         else:
             force_ground = False
+            
+        if stall and not prev_stall:
+            name = msg = 'Stall!!'
+            
+        if not stall and prev_stall:
+            name = 'Recovered'
+            msg  = 'Recovered from stall'
+            
+        if in_air and not prev_in_air:
+            name = 'T/O'
+            msg  = 'Takeoff'
+            
+        if not in_air and prev_in_air:
+            name = 'T/D VS: ' + str(round(vs))
+            msg  = 'Touchdown'
+            
+        if flaps != prev_flaps and not flaps_move:
+            flaps_move = True
+            
+        if flaps == prev_flaps and flaps_move:
+            flaps_str = str(round(flaps * 100)) + '%'
+            name = 'Flaps ' + flaps_str
+            msg  = 'Flaps set to ' + flaps_str
+            add_point(spec, lon, lat, alt, hgt,
+                      time, hdg, ias, gs, tas, vs,
+                      sp_stl_map, name=name, msg=msg)
+            coords += [format_coords(lon, lat, alt, hgt)]
+            
+            flaps_move = False
+            prev_in_air = in_air
+            prev_stall  = stall
+            prev_hdg    = hdg
+            prev_vs     = vs
+            prev_alt    = alt
+            prev_hgt    = hgt
+            continue
+            
+        prev_flaps = flaps
             
         # End/Start track
         if prev_in_air != in_air or prev_stall != stall:
             coords += [format_coords(lon, lat, alt_fix, hgt_fix)]
             ls.coords = coords
             ls = prepare_track(trk, in_air, stall, 
-                            no_trk_stl, st_trk_stl)
+                               no_trk_stl, st_trk_stl)
             coords = [format_coords(lon, lat, alt, hgt)]
             
-            # Add information pin to the trajectory
-            add_data_point(dat, lon, lat, alt, hgt,
-                            time, hdg, ias, gs, tas, vs,
-                            da_stl_map, force_ground)
-        
+            add_point(spec, lon, lat, alt, hgt,
+                      time, hdg, ias, gs, tas, vs,
+                      sp_stl_map, name=name, msg=msg,
+                      force_ground=force_ground)
+            
             prev_in_air = in_air
             prev_stall  = stall
+            prev_hdg    = hdg
+            prev_vs     = vs
             prev_alt    = alt
             prev_hgt    = hgt
             continue
+        
+        # Add information pin to the trajectory
+        # add_point(dat, lon, lat, alt, hgt,
+        #           time, hdg, ias, gs, tas, vs,
+        #           da_stl_map, fforce_ground)
         
         # If direction deviation is more than threshold,
         # than add coords
@@ -289,7 +337,7 @@ def to_kml(df, ctime, file_path=None):
         vs_dev  = abs(prev_vs - vs)
         if hdg_dev > hdg_thr or (in_air and vs_dev > vs_thr):
             coords += [format_coords(lon, lat, alt, hgt)]
-            add_data_point(dat, lon, lat, alt, hgt,
+            add_point(dat, lon, lat, alt, hgt,
                            time, hdg, ias, gs, tas, vs,
                            da_stl_map)
             prev_hdg = hdg
@@ -305,9 +353,11 @@ def to_kml(df, ctime, file_path=None):
     # Write unprocessed data
     coords += [format_coords(lon, lat, alt, hgt)]
     ls.coords = coords
-    add_data_point(dat, lon, lat, alt, hgt,
-                   time, hdg, ias, gs, tas, vs,
-                   da_stl_map)
+    name = 'Stop log'
+    msg  = 'Logging stopped'
+    add_point(spec, lon, lat, alt, hgt,
+              time, hdg, ias, gs, tas, vs,
+              sp_stl_map, name=name, msg=msg)
     
     # Saving
     if file_path == None:
