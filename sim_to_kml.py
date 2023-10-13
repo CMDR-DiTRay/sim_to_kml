@@ -377,9 +377,9 @@ def process_data(flt, trk, spec, dat,
 
 def to_kml(df, ctime, file_path=None):
     # Generate document name by creation date/time
-    kml_name = 'Flightlog' + string_from_time(ctime, delim='.')
+    kml_name = 'Flightlog ' + string_from_time(ctime, delim='.')
     # Generate flight folder name_from_time
-    flt_name = 'Flightlog' + string_from_time(df.time[0])
+    flt_name = 'Flightlog ' + string_from_time(df.time[0])
     
     no_trk_stl = norm_track_style()
     st_trk_stl = stall_track_style()
