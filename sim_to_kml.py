@@ -10,6 +10,12 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
+def print_help():
+    print('Usage: sim_to_kml.py src_file [dst_file]')
+    print()
+    print('Arguments:')
+    print('  --help, -h    Print this help.')
+
 def get_xp(csv_path, config, ctime):
     cfg = config['xp11']
     # Get good columns
@@ -408,11 +414,20 @@ if __name__ == "__main__":
     # Check if argumente received
     if len(sys.argv) == 1:
         print('Missing log file as argument. Quitting...')
+        print()
+        print_help()
         exit(1)
+    
+    if sys.argv[1] in ['-h', '--help']:
+        print_help()
+        exit(0)
     csv_path = Path(sys.argv[1])
     
     fpath = None
     if len(sys.argv) > 2:
+        if sys.argv[2] in ['-h', '--help']:
+            print_help()
+            exit(0)
         fpath = Path(sys.argv[2])
         
     sim = None
