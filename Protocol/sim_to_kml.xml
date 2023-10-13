@@ -1,0 +1,119 @@
+<?xml version="1.0"?> 
+<PropertyList>
+<generic>
+
+<output>
+    <line_separator>newline</line_separator>
+    <var_separator>;</var_separator>
+    <preamble>lat;lon;alt;hgt;hdg;ias;tas;gs;vs;om;mm;im;flp;stl;time\r\n</preamble>
+    
+    <chunk>
+        <name>lattitude</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/position/latitude-deg</node>
+    </chunk>
+    
+    <chunk>
+        <name>longitude</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/position/longitude-deg</node>
+    </chunk>
+    
+    <chunk>
+        <name>altitude</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/position/altitude-ft</node>
+    </chunk>
+    
+    <chunk>
+        <name>elevation</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/position/altitude-agl-ft</node>
+    </chunk>
+    
+    <chunk>
+        <name>heading</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/orientation/heading-magnetic-deg</node>
+    </chunk>
+    
+    <chunk>
+        <name>indicated airspeed</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/instrumentation/airspeed-indicator/indicated-speed-kt</node>
+    </chunk>
+    
+    <chunk>
+        <name>true airspeed</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/velocities/airspeed-kt</node>
+    </chunk>
+    
+    <chunk>
+        <name>ground speed</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/velocities/groundspeed-kt</node>
+    </chunk>
+    
+    <chunk>
+        <name>vertical speed (fpm)</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/velocities/vertical-speed-fps</node>
+        <factor>60</factor>
+    </chunk>
+    
+    <chunk>
+        <name>outer marker</name>
+        <format>%d</format>
+        <type>int</type>
+        <node>/instrumentation/marker-beacon/outer</node>
+    </chunk>
+    
+    <chunk>
+        <name>middle marker</name>
+        <format>%d</format>
+        <type>int</type>
+        <node>/instrumentation/marker-beacon/middle</node>
+    </chunk>
+    
+    <chunk>
+        <name>inner marker</name>
+        <format>%d</format>
+        <type>int</type>
+        <node>/instrumentation/marker-beacon/inner</node>
+    </chunk>
+    
+    <chunk>
+        <name>flaps</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/surface-positions/flap-pos-norm</node>
+    </chunk>
+    
+    <chunk>
+        <name>stall</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/fdm/jsbsim/systems/stall-warn-norm</node>
+    </chunk>
+    
+    <chunk>
+        <name>time</name>
+        <format>%f</format>
+        <type>float</type>
+        <node>/sim/time/elapsed-sec</node>
+    </chunk>
+
+</output>
+
+</generic>
+</PropertyList>
