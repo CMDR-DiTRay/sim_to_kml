@@ -16,7 +16,7 @@ def print_help():
     print('Arguments:')
     print('  --help, -h    Print this help.')
 
-def get_xp(csv_path, config, ctime):
+def get_from_xp(csv_path, config, ctime):
     cfg = config['xp11']
     # Get good columns
     good_cols = list(cfg.values())
@@ -31,6 +31,16 @@ def get_xp(csv_path, config, ctime):
     df = df.rename(columns=ren_dict)
     # Set real time
     df.time += ctime
+        
+    return df
+
+def get_from_fg(csv_path, config, ctime):
+    df = pd.read_csv(csv_path, delimiter=';')
+    # Set real time
+    df.time += ctime
+    # Unify altitude to be less than 1
+    df.alt -= 0.5
+    df.hgt -= 0.5
         
     return df
 
@@ -441,7 +451,7 @@ if __name__ == "__main__":
 
     # Identify sim
     ext = str(csv_path).split('.')[-1]
-    if ext != 'txt' and ext != 'scv':
+    if ext != 'txt' and ext != 'csv':
         print('Unknown file type. Quitting...')
         exit(1)
     if ext == 'txt':
@@ -455,6 +465,13 @@ if __name__ == "__main__":
     if sim == 'xp11':
         print('X-Plane 11 data detected.')
         # Read file
-        df = get_xp(csv_path, cfg, ctime)
+        df = get_from_xp(csv_path, cfg, ctime)
+    if sim == 'fgfs':
+        print('FlightGear data detected.')
+        # Read file
+        df = get_from_fg(csv_path, cfg, ctime)
+    else:
+        print('Simulator type unknown. Quitting...')
+        exit(1)
     
     to_kml(df, ctime, fpath)
