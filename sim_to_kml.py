@@ -38,9 +38,9 @@ def get_from_fg(csv_path, config, ctime):
     df = pd.read_csv(csv_path, delimiter=';')
     # Set real time
     df.time += ctime
-    # Unify altitude to be less than 1
-    df.alt -= 0.5
-    df.hgt -= 0.5
+    # Unify altitude to be less than 1 on ground
+    df.alt -= 4
+    df.hgt -= 4
         
     return df
 
@@ -301,7 +301,7 @@ def process_data(flt, trk, spec, dat,
         prev_flaps = flaps
             
         # End/Start track
-        if prev_in_air != in_air or prev_stall != stall:
+        if prev_in_air != in_air or (prev_stall != stall and in_air):
             coords += [format_coords(lon, lat, alt_fix, hgt_fix)]
             ls.coords = coords
             ls = prepare_track(trk, in_air, stall, 
