@@ -26,7 +26,7 @@ Go to the Settings menu, and navigate to "Data Output" tab and "General Data Out
 - Marker status (105)
 - Warning status (127)
 
-___Optional.___* _You might also want to check those options in the "Show in cockpit" column in order to see all parameters in fligh. Though, it is not recommended as it makes distraction to the pilot, which is not what we want to get during critical stages of flight._
+___Optional.___ _You might also want to check those options in the "Show in cockpit" column in order to see all parameters in fligh. Though, it is not recommended as it makes distraction to the pilot, which is not what we want to get during critical stages of flight._
 
 ___Optional.___ _In addidion, you might want to play with the "Disk Rate" parameter. In sets data write times per second. Howver, the default value of 10 is recommended._
 
