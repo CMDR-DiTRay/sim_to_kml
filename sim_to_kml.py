@@ -466,7 +466,7 @@ if __name__ == "__main__":
         print('X-Plane 11 data detected.')
         # Read file
         df = get_from_xp(csv_path, cfg, ctime)
-    if sim == 'fgfs':
+    elif sim == 'fgfs':
         print('FlightGear data detected.')
         # Read file
         df = get_from_fg(csv_path, cfg, ctime)
