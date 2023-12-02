@@ -41,7 +41,7 @@ def get_from_fg(csv_path, config, ctime):
     # Unify altitude to be less than 1 on ground
     df.alt -= 4
     df.hgt -= 4
-    df.stl = (df.stl - 0.5) * 2
+    df.stl = df.stl.apply(lambda x: 0 if x < 1 else 1)
         
     return df
 
