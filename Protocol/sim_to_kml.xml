@@ -103,7 +103,7 @@
         <name>stall</name>
         <format>%f</format>
         <type>float</type>
-        <node>/fdm/jsbsim/systems/stall-warn-norm</node>
+        <node>/fdm/jsbsim/systems/stall-horn-volume</node>
     </chunk>
     
     <chunk>
